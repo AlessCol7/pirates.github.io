@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🏴‍☠️ Captain Codey's Python Treasure Map</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sea: #0a2a4a;
+    --deep: #061625;
+    --sand: #e8c98a;
+    --gold: #f0a500;
+    --bright-gold: #ffd14d;
+    --wood: #8b4513;
+    --wood-light: #c4742a;
+    --red: #cc2200;
+    --green: #2a7a2a;
+    --scroll: #f5e6c8;
+    --ink: #2c1810;
+    --foam: #b8dde8;
+    --accent: #ff6b35;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background-color: var(--sea);
+    background-image:
+      radial-gradient(ellipse at 20% 50%, rgba(0,60,120,0.4) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 20%, rgba(0,30,80,0.6) 0%, transparent 50%),
+      url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 30 Q15 20 30 30 Q45 40 60 30' fill='none' stroke='rgba(255,255,255,0.03)' stroke-width='2'/%3E%3C/svg%3E");
+    color: var(--sand);
+    font-family: 'Crimson Pro', Georgia, serif;
+    font-size: 18px;
+    line-height: 1.7;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* WAVES */
+  .waves-top {
+    position: fixed; top: 0; left: 0; width: 100%; height: 6px;
+    background: linear-gradient(90deg, var(--foam), var(--sea), var(--foam), var(--sea));
+    background-size: 200% 100%;
+    animation: wave-slide 4s linear infinite;
+    z-index: 100;
+  }
+  @keyframes wave-slide { 0% { background-position: 0% 0%; } 100% { background-position: 200% 0%; } }
+
+  /* HEADER */
+  header {
+    text-align: center;
+    padding: 60px 20px 40px;
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at center top, rgba(240,165,0,0.15) 0%, transparent 70%);
+  }
+
+  .ship-emoji { font-size: 80px; display: block; margin-bottom: 10px; animation: bob 3s ease-in-out infinite; }
+  @keyframes bob { 0%,100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-12px) rotate(2deg); } }
+
+  h1 {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(1.8rem, 5vw, 3.2rem);
+    color: var(--bright-gold);
+    text-shadow: 3px 3px 0 var(--wood), 6px 6px 20px rgba(0,0,0,0.5);
+    letter-spacing: 2px;
+    line-height: 1.2;
+  }
+  .subtitle {
+    font-size: 1.1rem;
+    color: var(--foam);
+    font-style: italic;
+    margin-top: 10px;
+    opacity: 0.85;
+  }
+
+  /* PROGRESS MAP */
+  .progress-map {
+    background: linear-gradient(135deg, #0d3b6e, #0a2a4a);
+    border: 3px solid var(--gold);
+    border-radius: 16px;
+    margin: 0 auto 50px;
+    max-width: 700px;
+    padding: 25px;
+    position: relative;
+    box-shadow: 0 0 40px rgba(240,165,0,0.2), inset 0 0 60px rgba(0,0,0,0.3);
+  }
+  .progress-map h2 {
+    font-family: 'Cinzel Decorative', serif;
+    color: var(--gold);
+    font-size: 1rem;
+    text-align: center;
+    margin-bottom: 20px;
+    letter-spacing: 3px;
+  }
+  .map-islands {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .island {
+    text-align: center;
+    transition: transform 0.2s;
+    position: relative;
+  }
+  .island.unlocked { cursor: pointer; }
+  .island.unlocked:hover { transform: scale(1.1); }
+  .island-icon { font-size: 2.5rem; display: block; }
+  .island-label { font-size: 0.7rem; color: var(--sand); font-family: 'Share Tech Mono'; letter-spacing: 1px; }
+  .island.done .island-icon { filter: drop-shadow(0 0 8px var(--gold)); }
+  .island.done .island-label { color: var(--bright-gold); }
+  .island.active .island-icon { animation: pulse-glow 1.5s ease-in-out infinite; }
+  .island.locked-isle .island-icon { filter: grayscale(1) opacity(0.35); }
+  .island.locked-isle .island-label { color: rgba(184,221,232,0.35); }
+  @keyframes pulse-glow {
+    0%,100% { filter: drop-shadow(0 0 4px var(--accent)); }
+    50% { filter: drop-shadow(0 0 16px var(--accent)); }
+  }
+  .map-path {
+    width: 40px; height: 3px;
+    background: repeating-linear-gradient(90deg, var(--gold) 0, var(--gold) 6px, transparent 6px, transparent 12px);
+    opacity: 0.5;
+    flex-shrink: 0;
+  }
+
+  /* MAIN CONTENT */
+  main { max-width: 860px; margin: 0 auto; padding: 0 20px 80px; }
+
+  /* SECTION */
+  .section {
+    margin-bottom: 60px;
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .section.visible { opacity: 1; transform: translateY(0); }
+
+  /* ---- LOCKED SECTION GATE ---- */
+  .section-gate {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    background: linear-gradient(135deg, #061625, #0a1e38);
+    border: 2px dashed rgba(240,165,0,0.25);
+    border-radius: 14px;
+    padding: 50px 30px;
+    text-align: center;
+    transition: opacity 0.4s;
+  }
+  .gate-lock { font-size: 3.5rem; animation: shake-lock 4s ease-in-out infinite; }
+  @keyframes shake-lock {
+    0%,90%,100% { transform: rotate(0deg); }
+    92% { transform: rotate(-8deg); }
+    95% { transform: rotate(8deg); }
+    97% { transform: rotate(-4deg); }
+  }
+  .gate-title {
+    font-family: 'Cinzel Decorative', serif;
+    color: rgba(240,165,0,0.5);
+    font-size: 1rem;
+    letter-spacing: 3px;
+  }
+  .gate-hint {
+    color: rgba(184,221,232,0.5);
+    font-style: italic;
+    font-size: 0.95rem;
+  }
+
+  /* Section hidden = shows gate; unlocked = shows content */
+  .section-content { display: none; }
+  .section.unlocked .section-content { display: block; }
+  .section.unlocked .section-gate { display: none; }
+  /* First section always open */
+  #sec-tuples .section-gate { display: none; }
+  #sec-tuples .section-content { display: block; }
+
+  /* SCROLL CARD */
+  .scroll-card {
+    background: var(--scroll);
+    color: var(--ink);
+    border-radius: 12px;
+    padding: 35px 40px;
+    position: relative;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4), inset 0 0 40px rgba(139,69,19,0.08);
+    border: 2px solid var(--wood-light);
+  }
+  .scroll-card::before, .scroll-card::after {
+    content: '〰〰〰〰〰〰〰〰〰〰〰〰〰〰〰〰〰〰〰〰〰〰〰〰〰〰〰〰〰〰';
+    display: block;
+    color: var(--wood-light);
+    font-size: 0.8rem;
+    letter-spacing: 2px;
+    opacity: 0.4;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  .scroll-card::before { margin-bottom: 15px; }
+  .scroll-card::after { margin-top: 15px; }
+
+  .section-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--wood);
+    color: var(--bright-gold);
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 0.8rem;
+    padding: 5px 16px 5px 12px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+    letter-spacing: 1px;
+    box-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+  }
+  .section-badge .num {
+    background: var(--bright-gold); color: var(--wood);
+    width: 22px; height: 22px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.75rem; font-weight: 900; flex-shrink: 0;
+  }
+
+  .scroll-card h2 {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(1.2rem, 3vw, 1.7rem);
+    color: var(--wood);
+    margin-bottom: 15px;
+    line-height: 1.3;
+  }
+  .scroll-card p { margin-bottom: 14px; font-size: 1.05rem; }
+  .scroll-card strong { color: var(--wood); }
+
+  /* ANALOGY BOX */
+  .analogy {
+    background: linear-gradient(135deg, #fff8e1, #fef3c7);
+    border-left: 5px solid var(--gold);
+    border-radius: 0 10px 10px 0;
+    padding: 18px 22px;
+    margin: 20px 0;
+    position: relative;
+  }
+  .analogy::before {
+    content: '🏴‍☠️ PIRATE TIP';
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 0.65rem;
+    color: var(--wood);
+    letter-spacing: 2px;
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  /* CODE BLOCK */
+  .code-block {
+    background: #0d1b2a;
+    border: 1px solid rgba(240,165,0,0.3);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin: 20px 0;
+    position: relative;
+    overflow-x: auto;
+    box-shadow: inset 0 2px 20px rgba(0,0,0,0.4), 0 4px 15px rgba(0,0,0,0.3);
+  }
+  .code-label {
+    position: absolute; top: -12px; left: 20px;
+    background: var(--wood);
+    color: var(--bright-gold);
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 0.6rem;
+    padding: 2px 10px;
+    border-radius: 4px;
+    letter-spacing: 2px;
+  }
+  pre {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.95rem;
+    line-height: 1.8;
+    color: #e0e0e0;
+    white-space: pre;
+  }
+  .py-kw { color: #ff79c6; }
+  .py-fn { color: #50fa7b; }
+  .py-str { color: #f1fa8c; }
+  .py-num { color: #bd93f9; }
+  .py-com { color: #6272a4; font-style: italic; }
+  .py-var { color: #8be9fd; }
+  .py-out { color: #ffb86c; }
+
+  /* INTERACTIVE TRY IT */
+  .tryit {
+    background: linear-gradient(135deg, #0a3d2e, #0d4a38);
+    border: 2px solid #2a7a2a;
+    border-radius: 12px;
+    padding: 25px;
+    margin: 25px 0;
+  }
+  .tryit-header {
+    font-family: 'Cinzel Decorative', serif;
+    color: #50fa7b;
+    font-size: 0.8rem;
+    letter-spacing: 3px;
+    margin-bottom: 15px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .tryit-header::before { content: '⚓'; }
+  textarea {
+    width: 100%;
+    min-height: 100px;
+    background: #061212;
+    color: #50fa7b;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.9rem;
+    border: 1px solid rgba(80,250,123,0.3);
+    border-radius: 8px;
+    padding: 14px;
+    resize: vertical;
+    outline: none;
+    line-height: 1.6;
+  }
+  textarea:focus { border-color: rgba(80,250,123,0.7); box-shadow: 0 0 10px rgba(80,250,123,0.1); }
+  .run-btn {
+    background: linear-gradient(135deg, var(--gold), var(--wood-light));
+    color: var(--deep);
+    border: none;
+    border-radius: 8px;
+    padding: 10px 24px;
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    cursor: pointer;
+    margin-top: 12px;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+  .run-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(240,165,0,0.3); }
+  .run-btn:active { transform: translateY(0); }
+  .output-area {
+    min-height: 50px;
+    background: #061212;
+    color: var(--bright-gold);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.9rem;
+    border: 1px solid rgba(240,165,0,0.2);
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-top: 12px;
+    white-space: pre-wrap;
+    line-height: 1.6;
+    display: none;
+  }
+  .output-area.visible { display: block; }
+
+  /* run-hint: nudge shown before code is run */
+  .run-hint {
+    margin-top: 10px;
+    color: rgba(80,250,123,0.6);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.8rem;
+    font-style: italic;
+    display: none;
+  }
+  .run-hint.show { display: block; }
+
+  /* QUIZ */
+  .quiz {
+    background: linear-gradient(135deg, #1a0a2e, #2a0d4a);
+    border: 2px solid #bd93f9;
+    border-radius: 12px;
+    padding: 25px;
+    margin: 25px 0;
+    display: none;
+  }
+  .quiz.revealed { display: block; animation: fade-in-up 0.5s ease; }
+  @keyframes fade-in-up { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+  .quiz-title {
+    font-family: 'Cinzel Decorative', serif;
+    color: #bd93f9;
+    font-size: 0.8rem;
+    letter-spacing: 3px;
+    margin-bottom: 15px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .quiz-question { color: #f8f8f2; font-size: 1rem; margin-bottom: 15px; line-height: 1.5; }
+  .quiz-options { display: flex; flex-direction: column; gap: 8px; }
+  .quiz-opt {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(189,147,249,0.3);
+    border-radius: 8px;
+    padding: 10px 16px;
+    color: #f8f8f2;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.9rem;
+    text-align: left;
+  }
+  .quiz-opt:hover:not(:disabled) { background: rgba(189,147,249,0.15); border-color: #bd93f9; transform: translateX(4px); }
+  .quiz-opt.correct { background: rgba(80,250,123,0.2); border-color: #50fa7b; color: #50fa7b; }
+  .quiz-opt.wrong   { background: rgba(255,85,85,0.2);  border-color: #ff5555; color: #ff5555; }
+  .quiz-feedback { margin-top: 12px; font-style: italic; font-size: 0.95rem; min-height: 24px; }
+  .quiz-feedback.win  { color: #50fa7b; }
+  .quiz-feedback.lose { color: #ff5555; }
+
+  /* CHEST REWARD */
+  .treasure-unlock {
+    text-align: center;
+    padding: 30px;
+    background: linear-gradient(135deg, rgba(240,165,0,0.1), rgba(240,165,0,0.05));
+    border: 2px dashed var(--gold);
+    border-radius: 16px;
+    margin: 30px 0;
+    display: none;
+  }
+  .treasure-unlock.show { display: block; animation: chest-appear 0.5s ease; }
+  @keyframes chest-appear {
+    0%  { transform: scale(0.5); opacity: 0; }
+    60% { transform: scale(1.1); }
+    100%{ transform: scale(1);   opacity: 1; }
+  }
+  .treasure-unlock .chest { font-size: 60px; display: block; animation: spin-once 0.5s ease; }
+  @keyframes spin-once { 0% { transform: rotate(-15deg); } 50% { transform: rotate(10deg); } 100% { transform: rotate(0); } }
+
+  /* SUMMARY TABLE */
+  .cheatsheet {
+    background: #0a1628;
+    border: 2px solid var(--gold);
+    border-radius: 12px;
+    overflow: hidden;
+    margin: 25px 0;
+  }
+  .cheatsheet table { width: 100%; border-collapse: collapse; }
+  .cheatsheet th {
+    background: var(--wood);
+    color: var(--bright-gold);
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    padding: 12px 16px;
+    text-align: left;
+  }
+  .cheatsheet td {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(240,165,0,0.15);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--foam);
+    vertical-align: top;
+  }
+  .cheatsheet tr:last-child td { border-bottom: none; }
+  .cheatsheet tr:nth-child(even) td { background: rgba(255,255,255,0.03); }
+  .cheatsheet td:first-child { color: var(--bright-gold); font-weight: bold; }
+
+  /* CHALLENGE */
+  .challenge-box {
+    background: linear-gradient(135deg, #2a0d0d, #3a1010);
+    border: 2px solid var(--red);
+    border-radius: 12px;
+    padding: 25px;
+    margin: 25px 0;
+    position: relative;
+  }
+  .challenge-box::before {
+    content: '☠️ CHALLENGE';
+    font-family: 'Cinzel Decorative', serif;
+    color: var(--red);
+    font-size: 0.7rem;
+    letter-spacing: 3px;
+    display: block;
+    margin-bottom: 12px;
+  }
+  .challenge-box p { color: #f8c8c8; }
+  .challenge-box code { background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; font-family: 'Share Tech Mono'; }
+
+  /* FOOTER */
+  footer {
+    text-align: center;
+    padding: 40px 20px;
+    color: rgba(184,221,232,0.5);
+    font-size: 0.85rem;
+    font-style: italic;
+    border-top: 1px solid rgba(240,165,0,0.1);
+  }
+  .final-ship { font-size: 3rem; display: block; margin-bottom: 10px; animation: bob 3s ease-in-out infinite; }
+
+  /* TOOLTIP */
+  .tooltip-wrap { position: relative; display: inline; cursor: help; border-bottom: 1px dotted var(--gold); }
+  .tooltip-wrap .tip {
+    display: none;
+    position: absolute; bottom: 130%; left: 50%; transform: translateX(-50%);
+    background: var(--wood); color: var(--scroll);
+    padding: 8px 14px; border-radius: 8px;
+    font-size: 0.8rem; line-height: 1.4; white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    z-index: 10;
+    font-style: normal;
+  }
+  .tooltip-wrap:hover .tip { display: block; }
+
+  /* FLOATERS */
+  .floater { position: fixed; pointer-events: none; font-size: 1.5rem; opacity: 0.15; animation: float-across 20s linear infinite; z-index: 0; }
+  @keyframes float-across {
+    0%   { transform: translateX(-100px) translateY(0);   opacity: 0; }
+    10%  { opacity: 0.15; }
+    90%  { opacity: 0.15; }
+    100% { transform: translateX(110vw) translateY(-50px); opacity: 0; }
+  }
+
+  /* UNLOCK FLASH OVERLAY */
+  .unlock-flash {
+    position: fixed; inset: 0; pointer-events: none;
+    background: radial-gradient(ellipse at center, rgba(255,209,77,0.18) 0%, transparent 70%);
+    opacity: 0;
+    z-index: 200;
+    transition: opacity 0.3s;
+  }
+  .unlock-flash.flashing { opacity: 1; }
+
+  @media (max-width: 600px) {
+    .scroll-card { padding: 22px 20px; }
+    .map-path { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="waves-top"></div>
+<div class="unlock-flash" id="unlock-flash"></div>
+
+<!-- Floating decorations -->
+<div class="floater" style="top:30%; animation-delay:0s;">🦀</div>
+<div class="floater" style="top:60%; animation-delay:7s;">🐟</div>
+<div class="floater" style="top:15%; animation-delay:13s;">🦜</div>
+
+<header>
+  <span class="ship-emoji">⛵</span>
+  <h1>Captain Codey's<br>Python Treasure Map</h1>
+  <p class="subtitle">Sail through Tuples, Map &amp; Zip — three powerful pirate tools! 🗺️</p>
+</header>
+
+<!-- PROGRESS MAP -->
+<div class="progress-map" style="margin: 0 auto 50px; max-width: 700px;">
+  <h2>⚓ YOUR VOYAGE ⚓</h2>
+  <div class="map-islands">
+    <div class="island done unlocked" id="isle-home">
+      <span class="island-icon">🏖️</span>
+      <span class="island-label">HOME PORT<br>(Lists &amp; Loops)</span>
+    </div>
+    <div class="map-path"></div>
+    <div class="island active unlocked" id="isle-tuples" onclick="scrollToSection('sec-tuples')">
+      <span class="island-icon">🏝️</span>
+      <span class="island-label">TUPLE ISLAND</span>
+    </div>
+    <div class="map-path"></div>
+    <div class="island locked-isle" id="isle-map">
+      <span class="island-icon">🗺️</span>
+      <span class="island-label">MAP CAVE</span>
+    </div>
+    <div class="map-path"></div>
+    <div class="island locked-isle" id="isle-zip">
+      <span class="island-icon">⚡</span>
+      <span class="island-label">ZIP STORM</span>
+    </div>
+    <div class="map-path"></div>
+    <div class="island locked-isle" id="isle-treasure">
+      <span class="island-icon">💰</span>
+      <span class="island-label">TREASURE!</span>
+    </div>
+  </div>
+</div>
+
+<main>
+
+<!-- ========== TUPLES ========== -->
+<div class="section visible unlocked" id="sec-tuples">
+  <!-- no gate for first section -->
+  <div class="section-content">
+  <div class="scroll-card">
+    <div class="section-badge"><div class="num">1</div>🏝️ TUPLE ISLAND</div>
+    <h2>Tuples — The Locked Treasure Chest</h2>
+
+    <p>You already know <strong>lists</strong>. A list is like a treasure chest you can always open and change:</p>
+
+    <div class="code-block">
+      <div class="code-label">LIST (you know this!)</div>
+      <pre><span class="py-var">chest</span> = [<span class="py-str">"gold"</span>, <span class="py-str">"silver"</span>, <span class="py-str">"ruby"</span>]
+<span class="py-var">chest</span>[<span class="py-num">0</span>] = <span class="py-str">"diamond"</span>  <span class="py-com"># fine! we can change it</span></pre>
+    </div>
+
+    <p>A <strong>tuple</strong> is a chest with a <em>magic lock</em>. Once you seal it, <strong>nobody can change it</strong>. Not even you!</p>
+
+    <div class="analogy">
+      Imagine you've already delivered treasure to the Queen. You can't swap items in a delivered chest — the deal is done! That's a tuple: <strong>permanent, official, sealed</strong>.
+    </div>
+
+    <div class="code-block">
+      <div class="code-label">TUPLE — sealed with ( ) instead of [ ]</div>
+      <pre><span class="py-var">royal_chest</span> = (<span class="py-str">"gold"</span>, <span class="py-str">"silver"</span>, <span class="py-str">"ruby"</span>)
+
+<span class="py-com"># Reading works the same as lists:</span>
+<span class="py-fn">print</span>(<span class="py-var">royal_chest</span>[<span class="py-num">0</span>])   <span class="py-com"># → gold</span>
+<span class="py-fn">print</span>(<span class="py-var">royal_chest</span>[<span class="py-num">2</span>])   <span class="py-com"># → ruby</span>
+
+<span class="py-com"># But this would EXPLODE 💥:</span>
+<span class="py-com"># royal_chest[0] = "diamond"  ← TypeError!</span></pre>
+    </div>
+
+    <p><strong>Why use tuples?</strong> When data should never change — like coordinates, dates, or a pirate's true name.</p>
+
+    <div class="code-block">
+      <div class="code-label">REAL EXAMPLE</div>
+      <pre><span class="py-var">island_location</span> = (<span class="py-num">14.5</span>, <span class="py-num">-75.3</span>)  <span class="py-com"># latitude, longitude</span>
+<span class="py-var">pirate_birthday</span> = (<span class="py-num">1999</span>, <span class="py-num">7</span>, <span class="py-num">14</span>)    <span class="py-com"># year, month, day</span>
+
+<span class="py-com"># You can unpack tuples!</span>
+<span class="py-var">year</span>, <span class="py-var">month</span>, <span class="py-var">day</span> = <span class="py-var">pirate_birthday</span>
+<span class="py-fn">print</span>(<span class="py-var">year</span>)   <span class="py-com"># → 1999</span></pre>
+    </div>
+
+    <!-- Step 1: Run the code first -->
+    <div class="tryit">
+      <div class="tryit-header">STEP 1 — RUN THIS CODE FIRST</div>
+      <textarea id="code1" spellcheck="false">crew = ("Anne Bonny", "Blackbeard", "Calico Jack")
+print(crew[0])
+print(crew[1])
+
+# Unpack the crew!
+first, second, third = crew
+print("My captain is:", first)</textarea>
+      <button class="run-btn" id="run1-btn" onclick="runCode('code1','out1','hint1','quiz1')">⚓ RUN THE CODE</button>
+      <div class="output-area" id="out1"></div>
+      <div class="run-hint" id="hint1">✅ Code ran! Now answer the question below to sail on ↓</div>
+    </div>
+
+    <!-- Quiz 1 — hidden until code is run -->
+    <div class="quiz" id="quiz1">
+      <div class="quiz-title">🎯 QUICK CHALLENGE — answer correctly to unlock the next island!</div>
+      <div class="quiz-question">What's the difference between <code style="background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;font-family:'Share Tech Mono'">["a","b"]</code> and <code style="background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;font-family:'Share Tech Mono'">("a","b")</code>?</div>
+      <div class="quiz-options">
+        <button class="quiz-opt" onclick="answer(this,'q1',false)">A) Nothing, they're the same</button>
+        <button class="quiz-opt" onclick="answer(this,'q1',true)">B) The tuple () can't be changed; the list [] can</button>
+        <button class="quiz-opt" onclick="answer(this,'q1',false)">C) Tuples can only hold numbers</button>
+      </div>
+      <div class="quiz-feedback" id="q1-fb"></div>
+    </div>
+
+    <div class="treasure-unlock" id="chest1">
+      <span class="chest">🎉</span>
+      <p style="color:var(--bright-gold);font-family:'Cinzel Decorative',serif;font-size:1rem;">Tuple Island Conquered!</p>
+      <p style="color:var(--sand);margin-top:6px;">Map Cave is now unlocked — scroll down! ↓</p>
+    </div>
+
+  </div>
+  </div>
+</div>
+
+<!-- ========== MAP ========== -->
+<div class="section" id="sec-map">
+  <div class="section-gate">
+    <div class="gate-lock">🔒</div>
+    <div class="gate-title">MAP CAVE — LOCKED</div>
+    <div class="gate-hint">Finish Tuple Island first to unlock this island.</div>
+  </div>
+  <div class="section-content">
+  <div class="scroll-card">
+    <div class="section-badge"><div class="num">2</div>🗺️ MAP CAVE</div>
+    <h2>map() — The Magic Transformation Spell</h2>
+
+    <p>Imagine you have a list of cannonball weights in pounds, and you need them in kilograms. You <em>could</em> write a for-loop…</p>
+
+    <div class="code-block">
+      <div class="code-label">THE OLD WAY (for loop)</div>
+      <pre><span class="py-var">pounds</span> = [<span class="py-num">10</span>, <span class="py-num">20</span>, <span class="py-num">30</span>, <span class="py-num">50</span>]
+<span class="py-var">kilos</span> = []
+<span class="py-kw">for</span> <span class="py-var">p</span> <span class="py-kw">in</span> <span class="py-var">pounds</span>:
+    <span class="py-var">kilos</span>.<span class="py-fn">append</span>(<span class="py-var">p</span> * <span class="py-num">0.453</span>)
+<span class="py-fn">print</span>(<span class="py-var">kilos</span>)</pre>
+    </div>
+
+    <div class="analogy">
+      <strong>map()</strong> is like hiring a spell-caster on your ship. You say:<br>
+      <em>"Take EVERY item in this barrel, cast <u>this spell</u> on it, and give me a new barrel."</em><br>
+      You don't write the loop — the spell-caster does it for you!
+    </div>
+
+    <div class="code-block">
+      <div class="code-label">THE map() WAY ✨</div>
+      <pre><span class="py-var">pounds</span> = [<span class="py-num">10</span>, <span class="py-num">20</span>, <span class="py-num">30</span>, <span class="py-num">50</span>]
+
+<span class="py-kw">def</span> <span class="py-fn">to_kilos</span>(<span class="py-var">p</span>):
+    <span class="py-kw">return</span> <span class="py-var">p</span> * <span class="py-num">0.453</span>
+
+<span class="py-var">kilos</span> = <span class="py-fn">list</span>(<span class="py-fn">map</span>(<span class="py-fn">to_kilos</span>, <span class="py-var">pounds</span>))
+<span class="py-fn">print</span>(<span class="py-var">kilos</span>)
+<span class="py-com"># → [4.53, 9.06, 13.59, 22.65]</span></pre>
+    </div>
+
+    <p>⚠️ <strong>Important:</strong> <code style="background:rgba(0,0,0,0.1);padding:2px 6px;border-radius:4px;font-family:'Share Tech Mono'">map()</code> returns a lazy "map object" — wrap it in <code style="background:rgba(0,0,0,0.1);padding:2px 6px;border-radius:4px;font-family:'Share Tech Mono'">list()</code> to see the results!</p>
+
+    <div class="code-block">
+      <div class="code-label">map() RECIPE — always the same shape</div>
+      <pre><span class="py-com"># list( map( FUNCTION, YOUR_LIST ) )</span>
+<span class="py-var">result</span> = <span class="py-fn">list</span>( <span class="py-fn">map</span>( <span class="py-fn">my_function</span>, <span class="py-var">my_list</span> ) )
+
+<span class="py-com"># Works on strings too!</span>
+<span class="py-var">names</span> = [<span class="py-str">"anne"</span>, <span class="py-str">"blackbeard"</span>, <span class="py-str">"jack"</span>]
+<span class="py-var">shouting</span> = <span class="py-fn">list</span>(<span class="py-fn">map</span>(<span class="py-fn">str.upper</span>, <span class="py-var">names</span>))
+<span class="py-fn">print</span>(<span class="py-var">shouting</span>)
+<span class="py-com"># → ['ANNE', 'BLACKBEARD', 'JACK']</span></pre>
+    </div>
+
+    <div class="tryit">
+      <div class="tryit-header">STEP 1 — RUN THIS CODE FIRST</div>
+      <textarea id="code2" spellcheck="false">gold_coins = [5, 10, 25, 100]
+
+# Double every coin (pirates are greedy!)
+def double(n):
+    return n * 2
+
+doubled = list(map(double, gold_coins))
+print("Original:", gold_coins)
+print("Doubled: ", doubled)
+
+# Bonus: use map with str.upper
+crew = ["anne", "jack", "mary"]
+loud_crew = list(map(str.upper, crew))
+print("Shouting crew:", loud_crew)</textarea>
+      <button class="run-btn" id="run2-btn" onclick="runCode('code2','out2','hint2','quiz2')">⚓ RUN THE CODE</button>
+      <div class="output-area" id="out2"></div>
+      <div class="run-hint" id="hint2">✅ Code ran! Now answer the question below to sail on ↓</div>
+    </div>
+
+    <div class="quiz" id="quiz2">
+      <div class="quiz-title">🎯 QUICK CHALLENGE — answer correctly to unlock the next island!</div>
+      <div class="quiz-question">You have <code style="background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;font-family:'Share Tech Mono'">prices = [4, 8, 12]</code> and a function <code style="background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;font-family:'Share Tech Mono'">def discount(p): return p * 0.5</code>. How do you apply it to every price?</div>
+      <div class="quiz-options">
+        <button class="quiz-opt" onclick="answer(this,'q2',false)">A) map(prices, discount)</button>
+        <button class="quiz-opt" onclick="answer(this,'q2',true)">B) list(map(discount, prices))</button>
+        <button class="quiz-opt" onclick="answer(this,'q2',false)">C) discount(prices)</button>
+      </div>
+      <div class="quiz-feedback" id="q2-fb"></div>
+    </div>
+
+    <div class="treasure-unlock" id="chest2">
+      <span class="chest">🗺️</span>
+      <p style="color:var(--bright-gold);font-family:'Cinzel Decorative',serif;font-size:1rem;">Map Cave Explored!</p>
+      <p style="color:var(--sand);margin-top:6px;">Zip Storm is now unlocked — scroll down! ↓</p>
+    </div>
+
+  </div>
+  </div>
+</div>
+
+<!-- ========== ZIP ========== -->
+<div class="section" id="sec-zip">
+  <div class="section-gate">
+    <div class="gate-lock">🔒</div>
+    <div class="gate-title">ZIP STORM — LOCKED</div>
+    <div class="gate-hint">Finish Map Cave first to unlock this island.</div>
+  </div>
+  <div class="section-content">
+  <div class="scroll-card">
+    <div class="section-badge"><div class="num">3</div>⚡ ZIP STORM</div>
+    <h2>zip() — The Pairing Rope</h2>
+
+    <p>You have two separate lists: pirates and their ships. You want to connect them — pair each pirate with their ship.</p>
+
+    <div class="analogy">
+      <strong>zip()</strong> is like tying two ropes together, knot by knot.<br>
+      Rope 1: <em>["Anne", "Jack", "Mary"]</em><br>
+      Rope 2: <em>["Queen Anne", "Revenge", "Flying Fish"]</em><br>
+      zip knots them: <em>Anne↔Queen Anne, Jack↔Revenge, Mary↔Flying Fish</em>
+    </div>
+
+    <div class="code-block">
+      <div class="code-label">zip() BASIC EXAMPLE</div>
+      <pre><span class="py-var">pirates</span> = [<span class="py-str">"Anne"</span>, <span class="py-str">"Jack"</span>, <span class="py-str">"Mary"</span>]
+<span class="py-var">ships</span>   = [<span class="py-str">"Queen Anne"</span>, <span class="py-str">"Revenge"</span>, <span class="py-str">"Flying Fish"</span>]
+
+<span class="py-var">pairs</span> = <span class="py-fn">list</span>(<span class="py-fn">zip</span>(<span class="py-var">pirates</span>, <span class="py-var">ships</span>))
+<span class="py-fn">print</span>(<span class="py-var">pairs</span>)
+<span class="py-com"># → [('Anne', 'Queen Anne'), ('Jack', 'Revenge'), ('Mary', 'Flying Fish')]</span></pre>
+    </div>
+
+    <p>Notice: each pair is a <strong>tuple</strong>! zip() creates tuples automatically — those sealed chests from Island 1!</p>
+
+    <div class="code-block">
+      <div class="code-label">LOOP OVER zip() — super useful!</div>
+      <pre><span class="py-var">pirates</span> = [<span class="py-str">"Anne"</span>, <span class="py-str">"Jack"</span>, <span class="py-str">"Mary"</span>]
+<span class="py-var">coins</span>   = [<span class="py-num">500</span>, <span class="py-num">200</span>, <span class="py-num">750</span>]
+
+<span class="py-kw">for</span> <span class="py-var">pirate</span>, <span class="py-var">gold</span> <span class="py-kw">in</span> <span class="py-fn">zip</span>(<span class="py-var">pirates</span>, <span class="py-var">coins</span>):
+    <span class="py-fn">print</span>(<span class="py-var">pirate</span>, <span class="py-str">"has"</span>, <span class="py-var">gold</span>, <span class="py-str">"gold coins"</span>)
+
+<span class="py-com"># → Anne has 500 gold coins</span>
+<span class="py-com"># → Jack has 200 gold coins</span>
+<span class="py-com"># → Mary has 750 gold coins</span></pre>
+    </div>
+
+    <p>💡 <strong>What if lists have different lengths?</strong> zip() stops at the <em>shorter</em> list — it won't crash, just stops early.</p>
+
+    <div class="tryit">
+      <div class="tryit-header">STEP 1 — RUN THIS CODE FIRST</div>
+      <textarea id="code3" spellcheck="false">weapons = ["sword", "cannon", "dagger", "musket"]
+owners  = ["Anne", "Jack", "Mary", "Blackbeard"]
+
+# Zip them together!
+for weapon, owner in zip(weapons, owners):
+    print(owner, "carries a", weapon)
+
+print()
+
+# Combine all three tools: tuples + map + zip!
+scores = [80, 95, 60]
+names  = ["Anne", "Jack", "Mary"]
+
+def grade(s):
+    if s >= 90: return "Legend"
+    elif s >= 70: return "Good"
+    else: return "Try again"
+
+grades = list(map(grade, scores))
+for name, g in zip(names, grades):
+    print(name, "->", g)</textarea>
+      <button class="run-btn" id="run3-btn" onclick="runCode('code3','out3','hint3','quiz3')">⚓ RUN THE CODE</button>
+      <div class="output-area" id="out3"></div>
+      <div class="run-hint" id="hint3">✅ Code ran! Now answer the question below to claim the treasure ↓</div>
+    </div>
+
+    <div class="quiz" id="quiz3">
+      <div class="quiz-title">🎯 FINAL CHALLENGE — answer correctly to claim the treasure!</div>
+      <div class="quiz-question">You zip two lists: one with 4 items and one with 2 items. How many pairs do you get?</div>
+      <div class="quiz-options">
+        <button class="quiz-opt" onclick="answer(this,'q3',false)">A) 4 pairs</button>
+        <button class="quiz-opt" onclick="answer(this,'q3',true)">B) 2 pairs — zip stops at the shorter list</button>
+        <button class="quiz-opt" onclick="answer(this,'q3',false)">C) 6 pairs — it combines everything</button>
+      </div>
+      <div class="quiz-feedback" id="q3-fb"></div>
+    </div>
+
+    <div class="treasure-unlock" id="chest3">
+      <span class="chest">⚡</span>
+      <p style="color:var(--bright-gold);font-family:'Cinzel Decorative',serif;font-size:1rem;">Zip Storm Survived!</p>
+      <p style="color:var(--sand);margin-top:6px;">The final treasure is now unlocked — scroll down! ↓</p>
+    </div>
+
+  </div>
+  </div>
+</div>
+
+<!-- ========== TREASURE / SUMMARY ========== -->
+<div class="section" id="sec-treasure">
+  <div class="section-gate">
+    <div class="gate-lock">🔒</div>
+    <div class="gate-title">THE TREASURE — LOCKED</div>
+    <div class="gate-hint">Complete all three islands to claim your treasure!</div>
+  </div>
+  <div class="section-content">
+  <div class="scroll-card">
+    <div class="section-badge"><div class="num">4</div>💰 THE TREASURE</div>
+    <h2>Your Cheat Sheet — The Pirate's Codex</h2>
+
+    <p>You've sailed all three islands! Here's everything in one place:</p>
+
+    <div class="cheatsheet">
+      <table>
+        <thead>
+          <tr>
+            <th>TOOL</th>
+            <th>WHAT IT DOES</th>
+            <th>HOW TO USE IT</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>tuple</td>
+            <td>Sealed list — can't be changed</td>
+            <td>x = (1, 2, 3)</td>
+          </tr>
+          <tr>
+            <td>unpack</td>
+            <td>Split a tuple into variables</td>
+            <td>a, b, c = (1, 2, 3)</td>
+          </tr>
+          <tr>
+            <td>map()</td>
+            <td>Apply a function to every item</td>
+            <td>list(map(fn, lst))</td>
+          </tr>
+          <tr>
+            <td>zip()</td>
+            <td>Pair up two lists, item by item</td>
+            <td>list(zip(lst1, lst2))</td>
+          </tr>
+          <tr>
+            <td>zip in for</td>
+            <td>Loop over two lists at once</td>
+            <td>for a, b in zip(x, y):</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Now use <strong>all three tools together</strong> — this is captain-level Python!</p>
+
+    <div class="code-block">
+      <div class="code-label">ALL THREE TOOLS TOGETHER 🏴‍☠️</div>
+      <pre><span class="py-com"># A pirate shop with items and prices</span>
+<span class="py-var">items</span>  = [<span class="py-str">"sword"</span>, <span class="py-str">"map"</span>, <span class="py-str">"compass"</span>]
+<span class="py-var">prices</span> = (<span class="py-num">150</span>, <span class="py-num">30</span>, <span class="py-num">80</span>)  <span class="py-com"># tuple — prices never change!</span>
+
+<span class="py-kw">def</span> <span class="py-fn">add_tax</span>(<span class="py-var">p</span>):
+    <span class="py-kw">return</span> <span class="py-var">p</span> * <span class="py-num">1.2</span>   <span class="py-com"># 20% pirate tax</span>
+
+<span class="py-var">taxed</span> = <span class="py-fn">list</span>(<span class="py-fn">map</span>(<span class="py-fn">add_tax</span>, <span class="py-var">prices</span>))   <span class="py-com"># map!</span>
+
+<span class="py-kw">for</span> <span class="py-var">item</span>, <span class="py-var">price</span> <span class="py-kw">in</span> <span class="py-fn">zip</span>(<span class="py-var">items</span>, <span class="py-var">taxed</span>):  <span class="py-com"># zip!</span>
+    <span class="py-fn">print</span>(<span class="py-fn">f</span><span class="py-str">"{item}: {price:.1f} gold"</span>)
+
+<span class="py-com"># → sword: 180.0 gold</span>
+<span class="py-com"># → map: 36.0 gold</span>
+<span class="py-com"># → compass: 96.0 gold</span></pre>
+    </div>
+
+    <div class="challenge-box">
+      <p>You have two lists:<br>
+      <code>crew = ["Anne", "Jack", "Mary"]</code><br>
+      <code>skills = [8, 5, 9]</code> (skill level 1-10)<br><br>
+      Write code that:<br>
+      1. Uses a function + <code>map()</code> to multiply every skill by 10 (to get a percentage)<br>
+      2. Uses <code>zip()</code> to print each pirate and their skill %<br>
+      Try it in the box below! ☠️</p>
+    </div>
+
+    <div class="tryit">
+      <div class="tryit-header">YOUR FINAL QUEST</div>
+      <textarea id="code4" spellcheck="false">crew = ["Anne", "Jack", "Mary"]
+skills = [8, 5, 9]
+
+# Step 1: write your function here
+def to_percent(s):
+    return s * 10
+
+# Step 2: use map()
+percentages = list(map(to_percent, skills))
+
+# Step 3: use zip() and print
+for pirate, pct in zip(crew, percentages):
+    print(pirate, "->", pct, "%")</textarea>
+      <button class="run-btn" onclick="runCode('code4','out4',null,null)">⚓ RUN THE CODE</button>
+      <div class="output-area" id="out4"></div>
+    </div>
+
+    <div class="treasure-unlock show" id="final-chest">
+      <span class="chest">🏆</span>
+      <p style="color:var(--bright-gold);font-family:'Cinzel Decorative',serif;font-size:1.2rem;">TREASURE FOUND, CAPTAIN!</p>
+      <p style="color:var(--sand);margin-top:8px;font-size:1rem;">You now know <strong style="color:var(--bright-gold)">tuples</strong>, <strong style="color:var(--bright-gold)">map()</strong> and <strong style="color:var(--bright-gold)">zip()</strong>.<br>Your Python ship just got a LOT stronger. 🏴‍☠️</p>
+    </div>
+
+  </div>
+  </div>
+</div>
+
+</main>
+
+<footer>
+  <span class="final-ship">🏴‍☠️</span>
+  <p>Fair winds and following seas, young coder.</p>
+  <p style="margin-top:6px;font-size:0.75rem;opacity:0.5;">Built with Python, curiosity, and a bit of pirate magic.</p>
+</footer>
+
+<script>
+  // ── UNLOCK CHAIN ──────────────────────────────────────────────────────────
+  // Each stage must: (1) run code  → quiz appears
+  //                 (2) answer correctly → next section unlocks + chest shows
+
+  // Track whether code has been run for each stage
+  const codeRan = { 1: false, 2: false, 3: false };
+
+  // Map: quiz id → { nextSection, nextIsland, chestId, islandToMark }
+  const UNLOCK = {
+    q1: { nextSection: 'sec-map',      nextIsland: 'isle-map',      chestId: 'chest1', markDone: 'isle-tuples' },
+    q2: { nextSection: 'sec-zip',      nextIsland: 'isle-zip',      chestId: 'chest2', markDone: 'isle-map'    },
+    q3: { nextSection: 'sec-treasure', nextIsland: 'isle-treasure', chestId: 'chest3', markDone: 'isle-zip'    },
+  };
+
+  // ── SECTION OBSERVER ──────────────────────────────────────────────────────
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.06 });
+  document.querySelectorAll('.section').forEach(s => observer.observe(s));
+
+  // ── SCROLL ────────────────────────────────────────────────────────────────
+  function scrollToSection(id) {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // ── UNLOCK NEXT SECTION ───────────────────────────────────────────────────
+  function unlockSection(sectionId, islandId, chestId, markDoneId) {
+    // Flash effect
+    const flash = document.getElementById('unlock-flash');
+    flash.classList.add('flashing');
+    setTimeout(() => flash.classList.remove('flashing'), 600);
+
+    // Show chest
+    const chest = document.getElementById(chestId);
+    if (chest) {
+      chest.classList.add('show');
+      setTimeout(() => chest.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 200);
+    }
+
+    // Mark current island done
+    const doneIsle = document.getElementById(markDoneId);
+    if (doneIsle) {
+      doneIsle.classList.remove('active', 'locked-isle');
+      doneIsle.classList.add('done');
+    }
+
+    // Unlock next section after a short delay so the chest is seen first
+    setTimeout(() => {
+      // Unlock next island on map
+      const nextIsle = document.getElementById(islandId);
+      if (nextIsle) {
+        nextIsle.classList.remove('locked-isle');
+        nextIsle.classList.add('active', 'unlocked');
+        nextIsle.setAttribute('onclick', `scrollToSection('${sectionId}')`);
+      }
+
+      // Reveal next section
+      const nextSec = document.getElementById(sectionId);
+      if (nextSec) {
+        nextSec.classList.add('unlocked');
+        observer.observe(nextSec); // re-trigger fade-in
+        setTimeout(() => nextSec.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+      }
+    }, 900);
+  }
+
+  // ── RUN CODE ──────────────────────────────────────────────────────────────
+  // quizId: id of quiz to reveal after running (null = no quiz)
+  function runCode(inputId, outputId, hintId, quizId) {
+    const code = document.getElementById(inputId).value;
+    const outEl = document.getElementById(outputId);
+    outEl.classList.add('visible');
+
+    try {
+      const lines = [];
+      const fakePrint = (...args) => lines.push(args.map(String).join(' '));
+
+      let jsCode = code
+        .replace(/\bprint\(/g, '__print__(')
+        .replace(/__print__\(f"([^"]*)"\)/g, (_, s) => {
+          const js = s.replace(/\{([^}:]+)(?::\.?\d+f)?\}/g, '${$1}');
+          return `__print__(\`${js}\`)`;
+        })
+        .replace(/__print__\(f'([^']*)'\)/g, (_, s) => {
+          const js = s.replace(/\{([^}:]+)(?::\.?\d+f)?\}/g, '${$1}');
+          return `__print__(\`${js}\`)`;
+        })
+        .replace(/\bdef\s+(\w+)\s*\(([^)]*)\)\s*:/g, 'function $1($2) {')
+        .replace(/\breturn\b/g, 'return')
+        .replace(/\bfor\s+(\w+)\s*,\s*(\w+)\s+in\s+/g, 'for (let [$1,$2] of ')
+        .replace(/\bfor\s+(\w+)\s+in\s+/g, 'for (let $1 of ')
+        .replace(/\belif\b/g, '} else if')
+        .replace(/\bif\s+(.+):/g, 'if ($1) {')
+        .replace(/\belse:/g, '} else {')
+        .replace(/\bTrue\b/g, 'true').replace(/\bFalse\b/g, 'false')
+        .replace(/str\.upper/g, '__strUpper')
+        .replace(/str\.lower/g, '__strLower');
+
+      const converted = naiveIndentToBrace(jsCode);
+
+      const fn = new Function(
+        '__print__', '__strUpper', '__strLower', 'zip', 'map_py', 'list_py',
+        converted
+      );
+
+      fn(
+        fakePrint,
+        s => s.toUpperCase(),
+        s => s.toLowerCase(),
+        function*(...args) {
+          const iters = args.map(a => a[Symbol.iterator]());
+          while (true) {
+            const nexts = iters.map(it => it.next());
+            if (nexts.some(n => n.done)) return;
+            yield nexts.map(n => n.value);
+          }
+        },
+        (fn, iter) => [...iter].map(fn),
+        a => [...a]
+      );
+
+      outEl.textContent = lines.join('\n') || '(no output)';
+    } catch(e) {
+      outEl.textContent = '⚠️ ' + e.message;
+    }
+
+    // Show hint
+    if (hintId) {
+      const hint = document.getElementById(hintId);
+      if (hint) hint.classList.add('show');
+    }
+
+    // Reveal quiz (only after running code)
+    if (quizId) {
+      setTimeout(() => {
+        const quiz = document.getElementById(quizId);
+        if (quiz) {
+          quiz.classList.add('revealed');
+          quiz.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      }, 500);
+    }
+  }
+
+  // ── ANSWER QUIZ ───────────────────────────────────────────────────────────
+  function answer(btn, qid, correct) {
+    const opts = btn.parentElement.querySelectorAll('.quiz-opt');
+    opts.forEach(o => o.disabled = true);
+    const fb = document.getElementById(qid + '-fb');
+
+    if (correct) {
+      btn.classList.add('correct');
+      fb.textContent = '🎉 ARRR! Correct, Captain! Unlocking the next island…';
+      fb.className = 'quiz-feedback win';
+
+      const u = UNLOCK[qid];
+      if (u) unlockSection(u.nextSection, u.nextIsland, u.chestId, u.markDone);
+
+      // Final island: also mark treasure done
+      if (qid === 'q3') {
+        setTimeout(() => {
+          const isle = document.getElementById('isle-treasure');
+          if (isle) { isle.classList.remove('locked-isle'); isle.classList.add('active', 'unlocked'); }
+        }, 900);
+      }
+
+    } else {
+      btn.classList.add('wrong');
+      fb.textContent = '☠️ Not quite! Read the section again and try another answer.';
+      fb.className = 'quiz-feedback lose';
+      // Re-enable all except the wrong one
+      opts.forEach(o => o.disabled = false);
+      btn.disabled = true;
+    }
+  }
+
+  // ── PYTHON → JS (naïve transpiler) ───────────────────────────────────────
+  function naiveIndentToBrace(code) {
+    const lines = code.split('\n');
+    const out = [];
+    const stack = [];
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const trimmed = line.trimStart();
+      const indent = line.length - trimmed.length;
+      if (trimmed === '') { out.push(''); continue; }
+      while (stack.length && indent <= stack[stack.length-1]) { stack.pop(); out.push('}'); }
+      if (trimmed.endsWith('{') || trimmed.match(/^\}\s*else\s*if|^\}\s*else/)) {
+        out.push(line); stack.push(indent);
+      } else if (trimmed.endsWith(':') && !trimmed.startsWith('//')) {
+        out.push(line.replace(/:$/, ' {')); stack.push(indent);
+      } else {
+        out.push(line);
+      }
+    }
+    while (stack.length) { stack.pop(); out.push('}'); }
+    return out.join('\n')
+      .replace(/\blist\(map\(([^,]+),\s*([^)]+)\)\)/g, 'list_py(map_py($1, $2))')
+      .replace(/\blist\(zip\(/g, '[...zip(')
+      .replace(/\blist\(([^)]+)\)\)/g, '[...$1)]')
+      .replace(/\bzip\(/g, 'zip(')
+      .replace(/\[\.\.\.(zip\([^)]+\))\]/g, '[...$1]');
+  }
+</script>
+</body>
+</html>
